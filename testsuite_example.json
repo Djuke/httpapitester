@@ -1,0 +1,80 @@
+{
+	"default":{
+		"request":{
+			"url":{
+				"scheme":"http",
+				"host":"example.test"
+			},
+			"urlUserInfo":{
+				"user":"user",
+				"password":"pass"
+			},
+			"TLSInsecureSkipVerify":false,
+			"headers":[
+				{
+					"key":"Accept-Charset",
+					"value":"utf-8"
+				},
+				{
+					"key":"Content-type",
+					"value":"application/x-www-form-urlencoded"
+				}
+			]
+		},
+		"response":{
+			"contentType":"application/json"
+		},
+		"useCookieJar":true,
+		"printDebugOnFail":true,
+		"printJsonIndented":true
+	},
+	"first":[
+		{
+			"label":"login",
+			"request":{
+				"method":"POST",
+				"url":{
+					"scheme":"https",
+					"host":"example.test",
+					"path":"/login"
+				},
+				"TLSInsecureSkipVerify":true,
+				"bodyString":"username=testuser&password=testpass"
+			},
+			"response":{
+				"statusCode":200
+			}
+		}
+	],
+	"includes":[],
+	"last":[
+		{
+			"label":"logout",
+			"request":{
+				"method":"GET",
+				"url":{
+					"path":"/logout"
+				}
+			},
+			"response":{
+				"statusCode":200,
+				"bodyCheck":true,
+				"bodyJsonSchema": {
+					"title": "Example Schema",
+					"type": "object",
+					"properties": {
+						"message": {
+							"type": "string"
+						},
+						"code": {
+							"description": "response code",
+							"type": "integer",
+							"minimum": 300
+						}
+					},
+					"required": ["code", "message"]
+				}
+			}
+		}
+	]
+}

@@ -15,6 +15,8 @@ import (
 	"external/github.com/xeipuuv/gojsonschema"
 )
 
+var headerJar = make(map[string]string)
+
 type Tests []*Test
 
 type Test struct {
@@ -30,17 +32,23 @@ type Test struct {
 		TLSInsecureSkipVerify bool `json:"tlsInsecureSkipverify"`
 		NoDefaultHeaders      bool `json:"noDefaultHeaders"`
 		Headers               []*struct {
-			Key   string `json:"key"`
-			Value string `json:"value"`
+			Key        string `json:"key"`
+			Value      string `json:"value"`
+			UseFromJar bool   `json:"useFromJar"`
 		} `json:"headers"`
 		BodyString string      `json:"bodyString"`
 		BodyJson   interface{} `json:"bodyJson"`
 	} `json:"request"`
 	response *http.Response // contains the actual response
 	Response *struct {
-		Status         string `json:"status,omitempty`
-		StatusCode     int    `json:"statusCode"`
-		ContentType    string `json:"contentType"`
+		Status     string `json:"status,omitempty`
+		StatusCode int    `json:"statusCode"`
+		Headers    []*struct {
+			Key      string `json:"key"`
+			Value    string `json:"value"`
+			Validate bool   `json:"validate"`
+			PutInJar bool   `json:"putInJar"`
+		} `json:"headers"`
 		contentType    string
 		BodyCheck      bool                   `json:"bodyCheck"`
 		BodyString     string                 `json:"bodyString"`
@@ -76,11 +84,6 @@ func (t *Test) Prepare(defaultTest *Test) {
 			t.PrintDebugOnFail = true
 			if defaultTest.PrintJsonIndented {
 				t.PrintJsonIndented = true
-			}
-		}
-		if defaultTest.Response != nil {
-			if t.Response.ContentType == "" {
-				t.Response.ContentType = defaultTest.Response.ContentType
 			}
 		}
 	}
@@ -153,6 +156,22 @@ func (t *Test) prepareURL(defaultTest *Test) {
 	}
 }
 
+func (t *Test) prepareHeaders(defaultTest *Test) {
+	if t.Request.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Request != nil && defaultTest.Request.Headers != nil {
+		//TODO test if the default headers get overwritten by the ones in described in the test
+		t.Request.Headers = append(defaultTest.Request.Headers, t.Request.Headers...)
+	}
+
+	if len(t.Request.Headers) > 0 {
+		for _, h := range t.Request.Headers {
+			t.request.Header.Add(h.Key, h.Value)
+		}
+	}
+
+	//TODO add header to response test suite
+	//...
+}
+
 func (t *Test) prepareCookies(defaultTest *Test) {
 	if defaultTest == nil {
 		// t is the default test create new cookie jar in it nothing more
@@ -178,33 +197,22 @@ func (t *Test) prepareCookies(defaultTest *Test) {
 	}
 }
 
-func (t *Test) prepareHeaders(defaultTest *Test) {
-	if t.Request.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Request != nil && defaultTest.Request.Headers != nil {
-		t.Request.Headers = append(t.Request.Headers, defaultTest.Request.Headers...)
-	}
-	if len(t.Request.Headers) > 0 {
-		for _, h := range t.Request.Headers {
-			t.request.Header.Add(h.Key, h.Value)
-		}
-	}
-}
-
 func (t *Test) evaluate() {
 	t.readResponse()
 	if t.Response == nil {
 		return
 	}
+	t.evaluateHeaders()
 	t.evaluateStatusCode()
 	t.evaluateStatus()
-	t.evaluateContentType()
 	t.evaluateBody()
 }
 
 func (t *Test) readResponse() {
-	// content type
 	if t.response == nil {
 		return
 	}
+	// content type
 	if t.response.Header != nil {
 		if v, ok := t.response.Header["Content-Type"]; ok {
 			t.Response.contentType = v[0]
@@ -226,6 +234,23 @@ func (t *Test) readResponse() {
 	}
 }
 
+func (t *Test) evaluateHeaders() {
+	if t.Response.Headers != nil {
+		for _, testCase := range t.Response.Headers {
+			value, ok := t.response.Header[testCase.Key]
+			if ok {
+				if testCase.PutInJar && value[0] == testCase.Value {
+					headerJar[testCase.Key] = value[0]
+				} else if testCase.Validate && value[0] != testCase.Value {
+					t.fail(fmt.Errorf("expected header %s to equal %s, given %s", testCase.Key, value[0], testCase.Value))
+				}
+			} else if testCase.Validate {
+				t.fail(fmt.Errorf("expected header %s to be present", testCase.Key))
+			}
+		}
+	}
+}
+
 func (t *Test) evaluateStatusCode() {
 	if t.Response.StatusCode != 0 && t.Response.StatusCode != t.response.StatusCode {
 		t.fail(fmt.Errorf("expect status code to equal %d, given %d", t.Response.StatusCode, t.response.StatusCode))
@@ -235,12 +260,6 @@ func (t *Test) evaluateStatusCode() {
 func (t *Test) evaluateStatus() {
 	if t.Response.Status != "" && t.Response.Status != t.response.Status {
 		t.fail(fmt.Errorf("expect status to equal %q, given %q", t.Response.Status, t.response.Status))
-	}
-}
-
-func (t *Test) evaluateContentType() {
-	if t.Response.ContentType != "" && t.Response.ContentType != t.Response.contentType {
-		t.fail(fmt.Errorf("expect content type to equal %q, given %q", t.Response.ContentType, t.Response.contentType))
 	}
 }
 

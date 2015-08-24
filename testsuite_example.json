@@ -22,7 +22,12 @@
 			]
 		},
 		"response":{
-			"contentType":"application/json"
+			"headers":[
+			  	{
+					"key":"Content-type",
+				  	"value":"application/json"
+				}
+			]
 		},
 		"useCookieJar":true,
 		"printDebugOnFail":true,

@@ -17,11 +17,8 @@
 
 A tool to test a HTTP API if no tests are written for a HTTP service. I recommend writting HTTP API test as part of your code. But if you come across some code that hasn't this might be useful.
 
-# Build
-
 This code is tested and build using [Go](http://golang.org) version 1.5
 
-If all went well you should have a binary called httpapitester in your current folder.
 
 # Usage
 
@@ -75,7 +72,8 @@ This is the test's JSON format:
 		"headers":[
 		  {
 		    "key":"Content-type",
-		    "value":"plain/text"
+		    "value":"plain/text",
+		    "useFromJar":true
 		  }
 		],
 		"bodyString":"data",
@@ -89,7 +87,15 @@ This is the test's JSON format:
 	"response":{
 	  "status":"200 OK",
 		"statusCode":200,
-		"ContentType":"application/json",
+		"noDefaultHeaders":true,
+		"headers":[
+		  {
+		    "key":"Content-type",
+		    "value":"plain/text",
+		    "putInJar":false,
+		    "validate":true
+		  }
+		]
 		"bodyCheck":true,
 		"bodyString":"success",
 		"bodyJsonSchema":{}
@@ -112,10 +118,16 @@ Explanation of some properties (not declaring a property has the same result as 
     - **fragment**: fragment for references, without '#'
   - **urlUserInfo**: basic authentication credentials, will be added to the `url` property
   - **tlsInsecureSkipverify**: controls whether to verify the server's certificate chain and host name. If true, TLS accepts any certificate presented by the server and any host name in that certificate. In this mode, TLS is susceptible to man-in-the-middle attacks.
-  - **noDefaultHeaders**: if true the default headers will not be appended
+  - **noDefaultHeaders**: if true the default headers will not be prepended
+  - **headers**: header which will be added to the request
+    - **useFromJar**: response header values can be put in the headerJar and then be used in the request
   - **bodyString**: can contain any sort of data and preceeds above `bodyJson` when not empty
   - **bodyJson**: added for readability within the test file, and it can be printed with indentation when the test fails, leave empty if no body should be send
 - **response**: contains values which will be tested, leave empty if nothing should be checked
+  - **noDefaultHeaders**: if true the default headers will not be added
+  - **headers**: a default header will not overwrite the existing header
+    - **validate**: validate the response header value
+    - **putInJar**: the header value will be put in the headerJar which can be used by requests
   - **bodyCheck**: if true the body will be checked
   - **bodyString**: preceeds above `bodyJsonSchema` and is only tested if `bodyCheck` is true
   - **bodyJsonSchema**: see [JSON response schema validation](#json-response-schema-validation) for more information, will only be tested if `bodyCheck` is true
@@ -175,8 +187,10 @@ Overwrite explanation
     - **fragment**: default overwrites if empty
   - **urlUserInfo**: default overwrites if `url.host` is overwritten
   - **tlsInsecureSkipverify**: default will overwrite if `url.host` is overwritten and the default value is true
+  - **headers**: a default header will not overwrite an existing header
 - **response**
   - **contentType**: default overwrites if empty
+  - **headers**: a default header will not overwrite an existing header
 - **useCookieJar**: default overwrites if the default value is true
 - **noCookieJar**: can not be overwritten by default and preceeds above `useCookieJar`
 - **printDebugOnFail**: default overwrites if the default value is true

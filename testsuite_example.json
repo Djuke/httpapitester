@@ -18,14 +18,19 @@
 				{
 					"key":"Content-type",
 					"value":"application/x-www-form-urlencoded"
-				}
+				},
+			  	{
+					"key":"authenticate",
+				  	"useFromJar":true
+			  	}
 			]
 		},
 		"response":{
 			"headers":[
 			  	{
 					"key":"Content-type",
-				  	"value":"application/json"
+				  	"value":"application/json",
+				  	"validate":true
 				}
 			]
 		},
@@ -47,7 +52,13 @@
 				"bodyString":"username=testuser&password=testpass"
 			},
 			"response":{
-				"statusCode":200
+				"statusCode":200,
+			  	"headers":[
+				  	{
+					  	"key":"authenticate",
+					  	"putInJar":true
+					}
+				]
 			}
 		}
 	],

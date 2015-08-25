@@ -19,6 +19,13 @@ var headerJar = make(map[string]string)
 
 type Tests []*Test
 
+type responseHeaderTestCase struct {
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	Validate bool   `json:"validate"`
+	PutInJar bool   `json:"putInJar"`
+}
+
 type Test struct {
 	Label   string        `json:"label"`
 	request *http.Request // contains the actual request
@@ -41,19 +48,15 @@ type Test struct {
 	} `json:"request"`
 	response *http.Response // contains the actual response
 	Response *struct {
-		Status     string `json:"status,omitempty`
-		StatusCode int    `json:"statusCode"`
-		Headers    []*struct {
-			Key      string `json:"key"`
-			Value    string `json:"value"`
-			Validate bool   `json:"validate"`
-			PutInJar bool   `json:"putInJar"`
-		} `json:"headers"`
-		contentType    string
-		BodyCheck      bool                   `json:"bodyCheck"`
-		BodyString     string                 `json:"bodyString"`
-		BodyJsonSchema map[string]interface{} `json:"bodyJsonSchema"`
-		body           []byte
+		Status           string                    `json:"status,omitempty`
+		StatusCode       int                       `json:"statusCode"`
+		NoDefaultHeaders bool                      `json:"noDefaultHeaders"`
+		Headers          []*responseHeaderTestCase `json:"headers"`
+		contentType      string
+		BodyCheck        bool                   `json:"bodyCheck"`
+		BodyString       string                 `json:"bodyString"`
+		BodyJsonSchema   map[string]interface{} `json:"bodyJsonSchema"`
+		body             []byte
 	} `json:"response"`
 	UseCookieJar      bool `json:"useCookieJar"`
 	NoCookieJar       bool `json:"NoCookieJar"`
@@ -157,6 +160,7 @@ func (t *Test) prepareURL(defaultTest *Test) {
 }
 
 func (t *Test) prepareHeaders(defaultTest *Test) {
+	// set request headers
 	if t.Request.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Request != nil && defaultTest.Request.Headers != nil {
 		//TODO test if the default headers get overwritten by the ones in described in the test
 		t.Request.Headers = append(defaultTest.Request.Headers, t.Request.Headers...)
@@ -164,12 +168,31 @@ func (t *Test) prepareHeaders(defaultTest *Test) {
 
 	if len(t.Request.Headers) > 0 {
 		for _, h := range t.Request.Headers {
+			if h.UseFromJar {
+				if v, ok := headerJar[h.Key]; ok {
+					h.Value = v
+				}
+			}
 			t.request.Header.Add(h.Key, h.Value)
 		}
 	}
 
-	//TODO add header to response test suite
-	//...
+	// set response test case headers
+	if t.Response.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Response != nil && defaultTest.Response.Headers != nil {
+		testCasesToAdd := make([]*responseHeaderTestCase, 0)
+		for _, defaultTestCase := range defaultTest.Response.Headers {
+			found := false
+			for _, testCase := range t.Response.Headers {
+				if defaultTestCase.Key == testCase.Key {
+					found = true
+				}
+			}
+			if !found {
+				testCasesToAdd = append(testCasesToAdd, defaultTestCase)
+			}
+		}
+		t.Response.Headers = append(t.Response.Headers, testCasesToAdd...)
+	}
 }
 
 func (t *Test) prepareCookies(defaultTest *Test) {
@@ -181,7 +204,7 @@ func (t *Test) prepareCookies(defaultTest *Test) {
 		}
 		return
 	}
-	// no cookie jar preceeds above use cookie jar
+	// no cookie jar precede above use cookie jar
 	if t.NoCookieJar {
 		return
 	}

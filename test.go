@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strings"
 
-	"external/github.com/xeipuuv/gojsonschema"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var headerJar = make(map[string]string)
@@ -265,7 +265,7 @@ func (t *Test) evaluateHeaders() {
 				if testCase.PutInJar && value[0] == testCase.Value {
 					headerJar[testCase.Key] = value[0]
 				} else if testCase.Validate && value[0] != testCase.Value {
-					t.fail(fmt.Errorf("expected header %s to equal %s, given %s", testCase.Key, value[0], testCase.Value))
+					t.fail(fmt.Errorf("expected header %s to equal %s, given %s", testCase.Key, testCase.Value, value[0]))
 				}
 			} else if testCase.Validate {
 				t.fail(fmt.Errorf("expected header %s to be present", testCase.Key))
@@ -297,17 +297,17 @@ func (t *Test) evaluateBody() {
 		}
 		t.fail(fmt.Errorf("expect response body to equal %q, given %q", t.Response.BodyString, t.Response.body))
 	} else if t.Response.BodyJsonSchema != nil {
-		schema, err := gojsonschema.NewJsonSchemaDocument(t.Response.BodyJsonSchema)
-		if err != nil {
-			t.fail(fmt.Errorf("response json schema error %s", err))
-			return
-		}
 		var v interface{}
 		if err := json.Unmarshal(t.Response.body, &v); err != nil {
 			t.fail(fmt.Errorf("response json body error %s", err))
 			return
 		}
-		if result := schema.Validate(v); !result.Valid() {
+		result, err := gojsonschema.Validate(gojsonschema.NewGoLoader(t.Response.BodyJsonSchema), gojsonschema.NewGoLoader(v))
+		if err != nil {
+			t.fail(fmt.Errorf("validation error %s", err))
+			return
+		}
+		if !result.Valid() {
 			for _, desc := range result.Errors() {
 				t.fail(fmt.Errorf("JSON schema expect %s", desc))
 			}
@@ -340,10 +340,10 @@ func (t *Test) printDebugOnfail() {
 			}
 			if t.PrintJsonIndented {
 				var out bytes.Buffer
-				if err = json.Indent(&out, b, "\t", "\t"); err != nil {
+				if err = json.Indent(&out, b, "\t", "  "); err != nil {
 					fmt.Println(err)
 				} else {
-					fmt.Println(out)
+					fmt.Println(out.String())
 				}
 			} else {
 				fmt.Printf("%s\n", b)
@@ -361,14 +361,13 @@ func (t *Test) printDebugOnfail() {
 				if t.Response.body != nil {
 					defaultBodyPrint := false
 					fmt.Printf("  \033[1;33mBody\033[0m: ")
-					switch strings.ToLower(t.Response.contentType) {
-					case "application/json":
+					if strings.Contains(strings.ToLower(t.Response.contentType), "application/json") {
 						if t.PrintJsonIndented {
 							var out bytes.Buffer
-							if err := json.Indent(&out, t.Response.body, "\t", "\t"); err != nil {
+							if err := json.Indent(&out, t.Response.body, "\t", "  "); err != nil {
 								fmt.Println(err)
 							} else {
-								fmt.Println(out.String)
+								fmt.Println(out.String())
 							}
 						} else {
 							defaultBodyPrint = true

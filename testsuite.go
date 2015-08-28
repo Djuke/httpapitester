@@ -13,15 +13,16 @@ type TestSuite struct {
 	Last                   []*Test  `json:"last,omitempty"`
 	total, count, ok, fail int
 	startTime              time.Time
+	fp string
 }
 
 func (ts *TestSuite) Run() {
-	cp, err := os.Getwd()
+	/*cp, err := os.Getwd()
 	if err != nil {
 		fmt.Printf("\033[1;31m%s\033[0m\n", err)
 		os.Exit(1)
-	}
-	tests, err := GetTests(cp, ts.Includes)
+	}*/
+	tests, err := GetTests(ts.fp, ts.Includes)
 	if err != nil {
 		fmt.Printf("\033[1;31m%s\033[0m\n", err)
 		os.Exit(1)

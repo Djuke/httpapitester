@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	testSuite := &TestSuite{}
+	testSuite := &TestSuite{fp: filepath.Dir(testSuiteFP)}
 	if err := json.Unmarshal(b, testSuite); err != nil {
 		if _, ok := err.(*json.UnmarshalTypeError); !ok {
 			log.Fatal(err)

@@ -166,7 +166,6 @@ func (t *Test) prepareURL(defaultTest *Test) {
 
 func (t *Test) prepareHeaders(defaultTest *Test) {
 	// set request headers
-	fmt.Printf("defaultTest: %+v", defaultTest)
 	if t.Request.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Request != nil && defaultTest.Request.Headers != nil {
 		//TODO test if the default headers get overwritten by the ones in described in the test
 		t.Request.Headers = append(defaultTest.Request.Headers, t.Request.Headers...)

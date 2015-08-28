@@ -1,10 +1,13 @@
+# HTTP API Tester
+[![](http://dockeri.co/image/djukevanhoof/httpapitester)](https://hub.docker.com/r/djukevanhoof/httpapitester/)
+[![](https://badge.imagelayers.io/djukevanhoof/httpapitester:latest.svg)](https://imagelayers.io/?images=djukevanhoof/httpapitester:latest 'Get your own badge on imagelayers.io')
+
 # Table of Contents
 - [Introduction](#introduction)
-- [Build](#build)
 - [Usage](#usage)
 - [Test suite](#test-suite)
   - [Test](#test)
-    - [JSON schema validation](#json-schema-validation)
+    - [JSON response schema validation](#json-response-schema-validation)
   - [Default test](#default-test)
   - [First tests](#first-tests)
   - [Includes](#includes)

@@ -82,6 +82,11 @@ func (t *Test) Run() bool {
 }
 
 func (t *Test) Prepare(defaultTest *Test) {
+	if t.Request == nil {
+		t.fail(errors.New("cannot execute test because 'request' is missing"))
+		return
+	}
+
 	if defaultTest != nil {
 		if defaultTest.PrintDebugOnFail {
 			t.PrintDebugOnFail = true
@@ -161,6 +166,7 @@ func (t *Test) prepareURL(defaultTest *Test) {
 
 func (t *Test) prepareHeaders(defaultTest *Test) {
 	// set request headers
+	fmt.Printf("defaultTest: %+v", defaultTest)
 	if t.Request.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Request != nil && defaultTest.Request.Headers != nil {
 		//TODO test if the default headers get overwritten by the ones in described in the test
 		t.Request.Headers = append(defaultTest.Request.Headers, t.Request.Headers...)
@@ -178,7 +184,7 @@ func (t *Test) prepareHeaders(defaultTest *Test) {
 	}
 
 	// set response test case headers
-	if t.Response.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Response != nil && defaultTest.Response.Headers != nil {
+	if t.Response != nil && t.Response.NoDefaultHeaders == false && defaultTest != nil && defaultTest.Response != nil && defaultTest.Response.Headers != nil {
 		testCasesToAdd := make([]*responseHeaderTestCase, 0)
 		for _, defaultTestCase := range defaultTest.Response.Headers {
 			found := false

@@ -4,11 +4,10 @@
 
 # Table of Contents
 - [Introduction](#introduction)
-- [Build](#build)
 - [Usage](#usage)
 - [Test suite](#test-suite)
   - [Test](#test)
-    - [JSON schema validation](#json-schema-validation)
+    - [JSON response schema validation](#json-response-schema-validation)
   - [Default test](#default-test)
   - [First tests](#first-tests)
   - [Includes](#includes)

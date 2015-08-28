@@ -1,3 +1,7 @@
+# HTTP API Tester
+[![](http://dockeri.co/image/djukevanhoof/httpapitester)](https://hub.docker.com/r/djukevanhoof/httpapitester/)
+[![](https://badge.imagelayers.io/djukevanhoof/httpapitester:latest.svg)](https://imagelayers.io/?images=djukevanhoof/httpapitester:latest 'Get your own badge on imagelayers.io')
+
 # Table of Contents
 - [Introduction](#introduction)
 - [Build](#build)

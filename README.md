@@ -98,7 +98,7 @@ This is the test's JSON format:
 		    "putInJar":false,
 		    "validate":true
 		  }
-		]
+		],
 		"bodyCheck":true,
 		"bodyString":"success",
 		"bodyJsonSchema":{}
